@@ -3,7 +3,6 @@ const https = require('https')
 const app = express()
 app.use(express.json())
 
-const SECRET   = "EFF_KEY_SECRET_VERY_SECRET"
 const PLACE_ID = "131774970380479"
 
 let latestVersion = 0
