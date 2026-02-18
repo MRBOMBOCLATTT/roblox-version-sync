@@ -1,10 +1,8 @@
 const express = require('express')
 const https = require('https')
 const app = express()
-app.use(express.json())
 
 const PLACE_ID = "131774970380479"
-
 let latestVersion = 0
 
 function checkRobloxVersion() {
@@ -12,12 +10,13 @@ function checkRobloxVersion() {
         let data = ''
         res.on('data', chunk => data += chunk)
         res.on('end', () => {
+            console.log("Roblox API response:", data)  // смотрим что приходит
             try {
                 const json = JSON.parse(data)
                 const v = json.currentPublishedVersion
                 if (v && v > latestVersion) {
                     latestVersion = v
-                    console.log("New version from Roblox API:", v)
+                    console.log("New version:", v)
                 }
             } catch(e) {
                 console.log("Parse error:", e.message)
