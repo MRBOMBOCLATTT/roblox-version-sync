@@ -1,35 +1,34 @@
 const express = require('express')
-const https = require('https')
+const fs = require('fs')
 const app = express()
+app.use(express.json())
 
-const PLACE_ID = "131774970380479"
-let latestVersion = 0
+const SECRET = "EFF_KEY_SECRET_VERY_SECRET"
+const FILE   = './version.json'
 
-function checkRobloxVersion() {
-    https.get(`https://develop.roblox.com/v1/places/${PLACE_ID}`, (res) => {
-        let data = ''
-        res.on('data', chunk => data += chunk)
-        res.on('end', () => {
-            console.log("Roblox API response:", data)  // смотрим что приходит
-            try {
-                const json = JSON.parse(data)
-                const v = json.currentPublishedVersion
-                if (v && v > latestVersion) {
-                    latestVersion = v
-                    console.log("New version:", v)
-                }
-            } catch(e) {
-                console.log("Parse error:", e.message)
-            }
-        })
-    }).on('error', e => console.log("Roblox API error:", e.message))
+function getLatest() {
+    try { return JSON.parse(fs.readFileSync(FILE)).latest || 0 }
+    catch { return 0 }
 }
 
-checkRobloxVersion()
-setInterval(checkRobloxVersion, 30 * 1000)
+function saveLatest(v) {
+    fs.writeFileSync(FILE, JSON.stringify({ latest: v }))
+}
+
+app.post('/update', (req, res) => {
+    if (req.headers['x-secret'] !== SECRET) {
+        return res.status(403).json({ error: "forbidden" })
+    }
+    const v = parseInt(req.body.version)
+    if (!isNaN(v) && v > getLatest()) {
+        saveLatest(v)
+        console.log("New latest version:", v)
+    }
+    res.json({ ok: true })
+})
 
 app.get('/version', (req, res) => {
-    res.json({ latest: latestVersion })
+    res.json({ latest: getLatest() })
 })
 
 app.listen(process.env.PORT || 3000, () => console.log("Running!"))
